@@ -2,8 +2,9 @@
 <head>
     <meta charset="utf-8">
     <title>U.S. Weekly Drought Conditions</title>
-
     <link href="http://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
+    <script src="http://spin.js.org/spin.min.js"></script>
+    <script src="js/spin_opt.js"></script>
     <style>
         body {
           padding: 0;
@@ -35,6 +36,7 @@
         }
 
         #map {
+          position: absolute;
           width: 900px;
           height: 600px;
           margin-left: 0px;
@@ -211,9 +213,6 @@
     <input type="range" class="slider">
   </div>
 </div>
-<!-- TODO: a table!?!? my inner web desiger is cringing. -->
-<!-- will come back and figure out how to draw the legend in the svg, along with the slider and title all svg -->
-<!-- TODO: mitigate initial load time -->
 <div id='legend-wrapper'>
   <table>
     <tr>
@@ -253,6 +252,10 @@
 <script>
 
   var width = 900, height = 600;
+
+  spin_target = document.getElementById('map'),
+
+  spinner = new Spinner(opts).spin(spin_target);
 
   var svg = d3.select( "#map" )
     .append( "svg" )
@@ -322,6 +325,8 @@
       .attr("fill", "none")
       .attr("stroke", "#BEBEBE");
 
+    spinner.stop();
+    
     var min = 0;
     var max = dates_unique.length - 1;
     var output = d3.select('#date').text(moment(new Date(dates_unique[0])).format('MMM DD, YYYY'));
