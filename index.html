@@ -39,9 +39,16 @@
           position: absolute;
           width: 900px;
           height: 600px;
-          margin-left: 0px;
+          margin-left: 100px;
           margin-top: 0px;
           margin-bottom: 5px;
+        }
+
+        #spinner-target {
+          position: absolute;
+          margin-left: 100px;
+          width: 900px;
+          height: 600px;
         }
 
         .drought_area {
@@ -55,7 +62,7 @@
         #title {
           position: absolute;
           top: 10px;
-          left: 20px;
+          left: 120px;
           display: none;
         }
 
@@ -65,7 +72,7 @@
           padding: 0px;
           margin: 0px;
           top: 510px;
-          left: 520px;
+          left: 620px;
           display: none;
         }
 
@@ -76,6 +83,7 @@
 
         #slider-wrapper input {
           width:150px;
+
         }
 
         #legend-wrapper {
@@ -87,6 +95,7 @@
 
         table {
           border-collapse: collapse;
+          margin-left: 100px;
         }
 
         td {
@@ -207,6 +216,10 @@
   <h3>Source: <a href='http://droughtmonitor.unl.edu/'>U.S. Drought Monitor</a></h3>
 </div>
 
+<div id="spinner-target"></div>
+
+<div id="map"></div>
+
 <div id='slider-wrapper'>
   <div>
     <div id="date"></div>
@@ -242,8 +255,6 @@
   </table>
 </div>
 
-<div id="map"></div>
-
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/d3-queue.v3.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3"></script>
@@ -253,14 +264,15 @@
 
   var width = 900, height = 600;
 
-  spin_target = document.getElementById('map'),
-
-  spinner = new Spinner(opts).spin(spin_target);
-
   var svg = d3.select( "#map" )
     .append( "svg" )
+    .attr( "id", "svg-map" )
     .attr( "width", width )
     .attr( "height", height );
+
+  var spin_target = document.getElementById('spinner-target');
+
+  spinner = new Spinner(opts).spin(spin_target);
 
   var projection = d3.geoAlbersUsa()
     .scale(1000)
@@ -326,7 +338,7 @@
       .attr("stroke", "#BEBEBE");
 
     spinner.stop();
-    
+
     var min = 0;
     var max = dates_unique.length - 1;
     var output = d3.select('#date').text(moment(new Date(dates_unique[0])).format('MMM DD, YYYY'));
