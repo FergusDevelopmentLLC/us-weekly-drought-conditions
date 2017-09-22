@@ -202,6 +202,21 @@
           background: #B8B8B8;
         }
 
+		    #credit-wrapper {
+          transform: translate(830px, 505px);
+        }
+
+        #credit {
+
+        }
+
+        .credit-link {
+          font-family: Montserrat, sans-serif;
+          font-size: .6em;
+          text-anchor: middle;
+          fill: #696969;
+          text-decoration: underline;
+        }
 
     </style>
 </head>
@@ -259,7 +274,12 @@
 
 <script>
 
-  var width = 900, height = 600;
+  var width = 900,
+      height = 600
+      drought_areas_data = '',
+      current_index = 0;
+
+  var colors = ["#fee5d9","#fcae91","#fb6a4a","#de2d26","#a50f15"];
 
   var svg = d3.select( "#map" )
     .append( "svg" )
@@ -280,15 +300,14 @@
 
   d3.queue()
     .defer(d3.json, 'data/drought_2017_v8.topojson')
-    .defer(d3.json, 'data/usa_ak_hi.geojson')
-    .defer(d3.json, 'data/states.geojson')
+    .defer(d3.json, 'data/states.topojson')
     .await(makeMap);
 
-  function makeMap(error, drought_areas, us, states) {
+  function makeMap(error, drought_areas, states) {
 
     svg.append("g")
       .selectAll("path")
-      .data(states.features)
+      .data( topojson.feature(states, states.objects.states).features )
       .enter()
       .append("path")
       .attr("d", geoPath)
@@ -303,36 +322,9 @@
       }
     });
 
-    var colors = ["#fee5d9","#fcae91","#fb6a4a","#de2d26","#a50f15"];
+    setDroughtDisplayFor(dates_unique[current_index]);
 
-    var drs = svg.append("g")
-      .selectAll("path")
-      .data( topojson.feature(drought_areas, drought_areas.objects.drought_2017_v5).features )
-      .enter()
-      .append("path")
-      .attr("d", geoPath)
-      .attr("class", "drought_area")
-      .style("display", function(d) {
-        if(d.properties.the_date != dates_unique[0]) {
-          return "none";
-        }
-      })
-      .attr( "fill", function(d){
-        return colors[d.properties.DM];
-      })
-      .attr("fill-opacity", "0.75")
-
-    // figure out how to do it this way
-    // https://bl.ocks.org/mbostock/4090848
-    svg.append("g")
-      .selectAll("path")
-      .data(us.features)
-      .enter()
-      .append("path")
-      .attr("d", geoPath)
-      .attr("class", "continental-us")
-      .attr("fill", "none")
-      .attr("stroke", "#BEBEBE");
+    addCredit();
 
     spinner.stop();
 
@@ -359,17 +351,62 @@
     d3.select("#legend-wrapper")
       .style("display", "block");
 
-    function update(val){
-      output.text(moment(new Date(dates_unique[val])).format('MMM DD, YYYY'));
-      drs.style("display", function(d) {
-        if(d.properties.the_date != dates_unique[val]) {
-          return "none";
-        }
-        return "block";
-      })
-    }
+      function update(val){
+        output.text(moment(new Date(dates_unique[val])).format('MMM DD, YYYY'));
+        setDroughtDisplayFor(dates_unique[val]);
+      }
+
+      function setDroughtDisplayFor (date) {
+
+        d3.select('#drought-areas').remove();
+        svg.append("g")
+          .attr('id', 'drought-areas')
+          .selectAll("path")
+          .data( topojson.feature(drought_areas, drought_areas.objects.drought_2017_v5).features )
+          .enter().append("path")
+          .filter(function(d) {
+            return d.properties.the_date == date;
+          })
+          .attr("d", geoPath)
+          .attr("class", "drought_area")
+          .attr( "fill", function(d){
+            return colors[d.properties.DM];
+          })
+          .attr("fill-opacity", "0.75");
+
+        d3.select('#state-overlay').remove();
+        svg.append("g")
+          .attr('id', 'state-overlay')
+          .selectAll("path")
+          .data( topojson.feature(states, states.objects.states).features )
+          .enter()
+          .append("path")
+          .attr("d", geoPath)
+          .attr("fill", "none")
+          .attr("stroke", "#000000")
+          .attr("stroke-width", .5)
+          .attr("stroke-opacity", "0.05");
+      }
 
   };
+
+
+
+  function addCredit() {
+
+    var svg_root = d3.select('svg')
+      .append('g')
+        .attr('id', 'credit-wrapper')
+      .append('text')
+        .attr('id', 'credit')
+      .append('tspan')
+        .append('a')
+          .attr('class', 'credit-link')
+          .attr('xlink:href', 'https://github.com/FergusDevelopmentLLC/us-weekly-drought-conditions')
+        .attr('target', '_blank')
+        .text('GitHub ');
+
+  }
 
 </script>
 </body>
