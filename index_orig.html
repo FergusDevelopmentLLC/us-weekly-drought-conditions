@@ -206,54 +206,16 @@
           transform: translate(830px, 505px);
         }
 
+        #credit {
+
+        }
+
         .credit-link {
           font-family: Montserrat, sans-serif;
           font-size: .6em;
           text-anchor: middle;
           fill: #696969;
           text-decoration: underline;
-        }
-
-        /*d3 slider*/
-        #slider {
-          /*transform: translate(60px, 230px);*/
-        }
-        .ticks {
-          font: 10px sans-serif;
-          fill: #696969;
-        }
-        .track,
-        .track-inset,
-        .track-overlay {
-          stroke-linecap: round;
-        }
-        .track {
-          stroke: #000;
-          stroke-opacity: 0.3;
-          stroke-width: 8px;
-          fill-opacity: .5;
-        }
-        .track-inset {
-          stroke: #ddd;
-          stroke-width: 6px;
-        }
-        .track-overlay {
-          pointer-events: stroke;
-          stroke-width: 50px;
-          stroke: transparent;
-        }
-        .handle {
-          fill: #fff;
-          stroke: #000;
-          stroke-opacity: 0.5;
-          stroke-width: 1.25px;
-        }
-
-        #date {
-          font-family: Montserrat, sans-serif;
-          fill: #696969;
-          text-align: center;
-          font-size: .95em;
         }
 
     </style>
@@ -270,8 +232,12 @@
 
 <div id="map"></div>
 
-<div id="date"></div>
-
+<div id='slider-wrapper'>
+  <div>
+    <div id="date"></div>
+    <input type="range" class="slider">
+  </div>
+</div>
 <div id='legend-wrapper'>
   <table>
     <tr>
@@ -311,10 +277,7 @@
   var width = 900,
       height = 600
       drought_areas_data = '',
-      current_index = 0,
-      dates_unique = [],
-      current_drought_areas_topo = '',
-      drs = '';
+      current_index = 0;
 
   var colors = ["#fee5d9","#fcae91","#fb6a4a","#de2d26","#a50f15"];
 
@@ -342,8 +305,6 @@
 
   function makeMap(error, drought_areas, states) {
 
-    current_drought_areas_topo = drought_areas;
-
     svg.append("g")
       .selectAll("path")
       .data( topojson.feature(states, states.objects.states).features )
@@ -353,13 +314,13 @@
       .attr("fill", "#ffffff")
       .attr("stroke", "#BEBEBE");
 
-    populateDatesUnique(drought_areas);
-
-    addDateDisplay(555, 522);
-
-    addSlider( 0, dates_unique.length - 1, 180, 0, 510, 540 );
-
-    populateMap();
+    //TODO: make this faster
+    var dates_unique = [];
+    drought_areas.objects.drought_2017_v5.geometries.forEach(function(d) {
+      if(dates_unique.indexOf(d.properties.the_date) != 1) {
+        dates_unique.push(d.properties.the_date);
+      }
+    });
 
     setDroughtDisplayFor(dates_unique[current_index]);
 
@@ -369,8 +330,7 @@
 
     var min = 0;
     var max = dates_unique.length - 1;
-
-    d3.select('#date').text(moment(new Date(dates_unique[0])).format('MMM DD, YYYY'));
+    var output = d3.select('#date').text(moment(new Date(dates_unique[0])).format('MMM DD, YYYY'));
 
     d3.select(".slider")
       .attr("min", min)
@@ -381,147 +341,53 @@
         update(this.value);
       });
 
-    // make these appear immediately after map is shown
+    // make these appear after map is painted
     d3.select("#title")
       .style("display", "block");
 
-    d3.select("#legend-wrapper").style("display", "block");
+    d3.select("#slider-wrapper")
+      .style("display", "block");
 
+    d3.select("#legend-wrapper")
+      .style("display", "block");
+
+    function update(val){
+      output.text(moment(new Date(dates_unique[val])).format('MMM DD, YYYY'));
+      setDroughtDisplayFor(dates_unique[val]);
+    }
+
+    function setDroughtDisplayFor (date) {
+
+      d3.select('#drought-areas').remove();
+      svg.append("g")
+        .attr('id', 'drought-areas')
+        .selectAll("path")
+        .data( topojson.feature(drought_areas, drought_areas.objects.drought_2017_v5).features )
+        .enter().append("path")
+        .filter(function(d) {
+          return d.properties.the_date == date;
+        })
+        .attr("d", geoPath)
+        .attr("class", "drought_area")
+        .attr( "fill", function(d){
+          return colors[d.properties.DM];
+        })
+        .attr("fill-opacity", "0.75");
+
+      // d3.select('#state-overlay').remove();
+      // svg.append("g")
+      //   .attr('id', 'state-overlay')
+      //   .selectAll("path")
+      //   .data( topojson.feature(states, states.objects.states).features )
+      //   .enter()
+      //   .append("path")
+      //   .attr("d", geoPath)
+      //   .attr("fill", "none")
+      //   .attr("stroke", "#000000")
+      //   .attr("stroke-width", .5)
+      //   .attr("stroke-opacity", "0.05");
+    }
   };
-
-  function populateMap() {
-
-    var drought_areas = current_drought_areas_topo;
-
-    d3.select('#drought-areas').remove();
-    drs = svg.append("g")
-      .attr('id', 'drought-areas')
-      .selectAll("path")
-      .data( topojson.feature(drought_areas, drought_areas.objects.drought_2017_v5).features )
-      .enter()
-        .append("path")
-          .attr("d", geoPath)
-          .attr("class", "drought_area")
-          .attr("date", function(d){
-            return d.properties.the_date;
-          })
-          .style("display", function(d) {
-            // if(d.properties.the_date != dates_unique[0]) {
-            //   return "none";
-            // }
-            return "none";
-          })
-          .attr( "fill", function(d){
-            return colors[d.properties.DM];
-          })
-          .attr("fill-opacity", "0.75");
-  }
-
-  function populateDatesUnique(drought_areas){
-    //TODO: make this faster
-    drought_areas.objects.drought_2017_v5.geometries.forEach(function(d) {
-      if(dates_unique.indexOf(d.properties.the_date) != 1) {
-        dates_unique.push(d.properties.the_date);
-      }
-    });
-  };
-
-  function update(val){
-    d3.select('#date').text(moment(new Date(dates_unique[val])).format('MMM DD, YYYY'));
-    setDroughtDisplayFor (dates_unique[val]);
-  }
-
-  function addDateDisplay(left_margin, top_margin) {
-
-    var translate = 'translate(' + left_margin + ", " + top_margin + ')';
-    var svg_root = d3.select('svg')
-      .append('g')
-        .attr('transform', translate)
-        .attr('id', 'date-wrapper')
-      .append('text')
-        .attr('id', 'date')
-        .text('August 1, 1997');
-  }
-
-  function addSlider(min, max, width, ticks_amt, left_margin, top_margin) {
-
-    var x = d3.scaleLinear()
-        .domain([min, max])
-        .range([0, width])
-        .clamp(true);
-
-    var svg_root = d3.select('svg');
-
-    var translate = 'translate(' + left_margin + ", " + top_margin + ')';
-    d3.select('#slider').remove();
-    svg_root.append("g")
-      .attr('id', 'slider')
-      .attr('transform', translate);
-
-    var slider = d3.select('#slider');
-    slider.append("line")
-        .attr("class", "track")
-        .attr("x1", x.range()[0])
-        .attr("x2", x.range()[1])
-      .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-        .attr("class", "track-inset")
-      .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-        .attr("class", "track-overlay")
-        .attr("id", "track-overlay")
-        .call(d3.drag()
-          .on("start.interrupt", function() {
-            slider.interrupt();
-          })
-          .on("start drag", function() {
-            var slider_position = x.invert(d3.event.x);
-            var slider_handle_value = Math.floor(slider_position);
-
-            if(slider_handle_value >= min && slider_handle_value <= max) {
-              handle.attr("cx", x(slider_handle_value));
-              update(slider_handle_value);
-            }
-          }));
-
-    slider.insert("g", ".track-overlay")
-        .attr("class", "ticks")
-        .attr("transform", "translate(0," + 18 + ")")
-      .selectAll("text")
-      .data(x.ticks(ticks_amt))
-      .enter().append("text")
-        .attr("x", x)
-        .attr("text-anchor", "middle")
-        .attr("transform", "translate(0,3)")
-        .text(function(d) { return d; });
-
-    // slider.insert("g", ".track-overlay")
-    //   .attr("class", "tick-marks")
-    //   .attr("transform", "translate(0,5)")
-    //   .selectAll("line")
-    //   .data(x.ticks(ticks_amt))
-    //   .enter().append("line")
-    //     .style('stroke', '#000')
-    //     .style('stroke-opacity', 0.5)
-    //     .attr("x1", x)
-    //     .attr("y1", 0)
-    //     .attr("x2", x)
-    //     .attr("y2", 3);
-
-    handle = slider.insert("circle", ".track-overlay")
-      .attr("class", "handle")
-      .attr("r", 9)
-      .attr("cx", 0);
-      //.attr("cx", ((this_year - slider_min) / (slider_max - slider_min)) * x.range()[1]);
-
-  }
-
-  function setDroughtDisplayFor (date) {
-    drs.style("display", function(d) {
-      if(d.properties.the_date != date) {
-        return "none";
-      }
-      return "block";
-    })
-  }
 
   function addCredit() {
 
