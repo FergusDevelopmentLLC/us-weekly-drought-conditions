@@ -3,8 +3,8 @@
     <meta charset="utf-8">
     <title>U.S. Weekly Drought Conditions</title>
     <link href="http://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
-    <script src="http://spin.js.org/spin.min.js"></script>
-    <script src="js/spin_opt.js"></script>
+    <!-- <script src="http://spin.js.org/spin.min.js"></script> -->
+    <!-- <script src="js/spin_opt.js"></script> -->
     <style>
 
         body {
@@ -23,11 +23,11 @@
           margin-bottom: 5px;
         }
 
-        #spinner-target {
+        /*#spinner-target {
           position: absolute;
           width: 900px;
           height: 600px;
-        }
+        }*/
 
         #legend-wrapper {
           position: absolute;
@@ -133,7 +133,7 @@
 </head>
 <body>
 
-<div id="spinner-target"></div>
+<!-- <div id="spinner-target"></div> -->
 
 <div id="map"></div>
 
@@ -191,9 +191,9 @@
     .attr( "width", width )
     .attr( "height", height );
 
-  var spin_target = document.getElementById('spinner-target');
+  // var spin_target = document.getElementById('spinner-target');
 
-  spinner = new Spinner(opts).spin(spin_target);
+  // spinner = new Spinner(opts).spin(spin_target);
 
   var projection = d3.geoAlbersUsa()
     .scale(1000)
@@ -234,7 +234,7 @@
 
     addCredit();
 
-    spinner.stop();
+    // spinner.stop();
 
     // make these appear immediately after map is shown
     d3.select("#title").style("display", "block");
